@@ -793,11 +793,21 @@ For example:
 
 See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
   (declare (indent 2))
-  (let ((docpos (or psearch-patch-function-definition-docpos
-                    (if (symbolp orig-func-spec) 3 (length orig-func-spec)))))
-    `(let ((func-def (psearch-patch--find-function ',orig-func-spec)))
+  (let* ((docpos (or psearch-patch-function-definition-docpos
+                     (if (symbolp orig-func-spec) 3 (length orig-func-spec))))
+         (lib (cdr (condition-case nil
+                       (find-function-library name 'lisp-only t)
+                     (void-function nil))))
+         (file (when lib (file-truename (file-name-with-extension (find-library-name lib) "el"))))
+         (buffer (when file (get-file-buffer file))))
+    `(let ((_ (when (and ,file (not ,buffer))
+                (run-with-idle-timer 0 nil (lambda ()
+                                             (when (get-file-buffer ,file) (kill-buffer (get-file-buffer ,file)))))))
+           (func-def (psearch-patch--find-function ',orig-func-spec))
+           (lb lexical-binding))
        (with-temp-buffer
          ;; Modifiy function name
+         (setq lexical-binding lb)
          (when (and (memq (nth 0 func-def) '(defun defsubst)) (not (eq ',name (nth 1 func-def))))
            (setcdr func-def (cons ',name (nthcdr 2 func-def))))
          (print func-def (current-buffer))
@@ -818,10 +828,7 @@ See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
          ;; Apply patch
          (goto-char (point-min))
          (if (progn ,@patch-form)
-             (let* ((lib (cdr (condition-case nil
-                                  (find-function-library ',name 'lisp-only t)
-                                (void-function nil))))
-                    (buffer-file-name (if lib (file-name-sans-extension lib))))
+             (let ((buffer-file-name ,file))
                (eval-region (point-min) (point-max)))
            (signal 'psearch-patch-failed
                    (list ',orig-func-spec "PATCH-FORM not applied")))))))
