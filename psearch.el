@@ -683,6 +683,7 @@ Examples:
                (`(,buf . ,pos) (find-function-search-for-symbol fun type file)))
     (with-current-buffer buf
       (goto-char pos)
+      (skip-chars-forward " \t")
       (let ((bounds (bounds-of-thing-at-point 'sexp)))
         (read (buffer-substring-no-properties (car bounds) (cdr bounds)))))))
 
