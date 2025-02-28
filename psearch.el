@@ -818,7 +818,7 @@ See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
           (+ ,docpos (if (equal 'lambda (sexp-at-point)) 0
                        (if (memq (sexp-at-point) '(defun defsubst cl-defgeneric cl-defmethod)) 1
                          0))))
-         (let ((str "[PATCHED]"))
+         (let ((str "<PATCHED> "))
            (goto-char (car (bounds-of-thing-at-point 'sexp)))
            (if (equal (char-after) ?\")
                (progn

@@ -426,7 +426,7 @@
   (should
    (equal
     (psearch-test--find-patched-function 'func)
-    '(defun func nil "[PATCHED]Docstring."
+    '(defun func nil "<PATCHED> Docstring."
             (list '(1 2 3) (if t '(4 5 6)) '(7 8 9)))))
   (should (equal (func) '((1 2 3) (4 5 6) (7 8 9))))
 
@@ -452,9 +452,9 @@
                              (if nil '(4 5 6))
                              '(7 8 9))))
         (generic-assert '(cl-defgeneric cl-test-1 (tag)
-                           "[PATCHED]Docstring." (progn "No implement.")))
+                           "<PATCHED> Docstring." (progn "No implement.")))
         (method-assert '(cl-defmethod cl-test-1 ((tag (eql foo)))
-                          "[PATCHED]Docstring."
+                          "<PATCHED> Docstring."
                           (progn
                             (progn
                               (list '(1 2 3)
@@ -527,9 +527,9 @@
                                     (if nil '(4 5 6))
                                     '(7 8 9)))))
         (patched-generic '(cl-defgeneric cl-test-2 (tag)
-                            "[PATCHED]Docstring." (progn "No implement.")))
+                            "<PATCHED> Docstring." (progn "No implement.")))
         (patched-method1 '(cl-defmethod cl-test-2 ((tag (eql foo)))
-                            "[PATCHED]Docstring."
+                            "<PATCHED> Docstring."
                             (progn
                               (progn
                                 (list '(1 2 3)
@@ -581,9 +581,9 @@
                              (if nil '(4 5 6))
                              '(7 8 9))))
         (generic-assert '(cl-defgeneric cl-test-3 (tag)
-                           "[PATCHED]Docstring." (progn "No implement.")))
+                           "<PATCHED> Docstring." (progn "No implement.")))
         (method-assert '(cl-defmethod cl-test-3 ((tag (eql foo)))
-                          "[PATCHED]Docstring."
+                          "<PATCHED> Docstring."
                           (progn
                             (list '(1 2 3)
                                   (if t '(4 5 6))
