@@ -793,18 +793,17 @@ For example:
 
 See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
   (declare (indent 2))
-  (let* ((docpos (or psearch-patch-function-definition-docpos
-                     (if (symbolp orig-func-spec) 3 (length orig-func-spec))))
-         (lib (cdr (condition-case nil
-                       (find-function-library name 'lisp-only t)
-                     (void-function nil))))
-         (file (when lib (file-truename (file-name-with-extension (find-library-name lib) "el"))))
-         (buffer (when file (get-file-buffer file))))
-    `(let ((_ (when (and ,file (not ,buffer))
-                (run-with-idle-timer 0 nil (lambda ()
-                                             (when (get-file-buffer ,file) (kill-buffer (get-file-buffer ,file)))))))
-           (func-def (psearch-patch--find-function ',orig-func-spec))
-           (lb lexical-binding))
+  `(let* ((lib (cdr (condition-case nil
+                        (find-function-library ',name 'lisp-only t)
+                      (void-function nil))))
+          (file (when lib (file-truename (file-name-with-extension (find-library-name lib) "el"))))
+          (buffer (when file (get-file-buffer file))))
+     (when (and file (not buffer))
+       (run-with-idle-timer 0 nil (lambda (f) (when (get-file-buffer f) (kill-buffer (get-file-buffer f)))) file))
+     (let* ((func-def (psearch-patch--find-function ',orig-func-spec))
+            (docpos (or psearch-patch-function-definition-docpos
+                        (if (symbolp ',orig-func-spec) 3 (length ',orig-func-spec))))
+            (lb lexical-binding))
        (with-temp-buffer
          ;; Modifiy function name
          (setq lexical-binding lb)
@@ -815,9 +814,9 @@ See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
          (goto-char (point-min))
          (down-list)
          (forward-sexp
-          (+ ,docpos (if (equal 'lambda (sexp-at-point)) 0
-                       (if (memq (sexp-at-point) '(defun defsubst cl-defgeneric cl-defmethod)) 1
-                         0))))
+          (+ docpos (if (equal 'lambda (sexp-at-point)) 0
+                      (if (memq (sexp-at-point) '(defun defsubst cl-defgeneric cl-defmethod)) 1
+                        0))))
          (let ((str "<PATCHED> "))
            (goto-char (car (bounds-of-thing-at-point 'sexp)))
            (if (equal (char-after) ?\")
@@ -828,7 +827,7 @@ See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
          ;; Apply patch
          (goto-char (point-min))
          (if (progn ,@patch-form)
-             (let ((buffer-file-name ,file))
+             (let ((buffer-file-name file))
                (eval-region (point-min) (point-max)))
            (signal 'psearch-patch-failed
                    (list ',orig-func-spec "PATCH-FORM not applied")))))))
