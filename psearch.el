@@ -799,7 +799,12 @@ See `psearch-patch' for explanation on arguments ORIG-FUNC-SPEC and PATCH-FORM."
           (file (when lib (file-truename (file-name-with-extension (find-library-name lib) "el"))))
           (buffer (when file (get-file-buffer file))))
      (when (and file (not buffer))
-       (run-with-idle-timer 0 nil (lambda (f) (when (get-file-buffer f) (kill-buffer (get-file-buffer f)))) file))
+       (run-with-idle-timer 0 nil
+                            (lambda (f)
+                              (when (get-file-buffer f)
+                                (let (kill-buffer-query-functions kill-buffer-hook)
+                                  (kill-buffer (get-file-buffer f)))))
+                            file))
      (let* ((func-def (psearch-patch--find-function ',orig-func-spec))
             (docpos (or psearch-patch-function-definition-docpos
                         (if (symbolp ',orig-func-spec) 3 (length ',orig-func-spec))))
